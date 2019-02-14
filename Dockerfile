@@ -1,11 +1,16 @@
-FROM golang:onbuild
-LABEL maintainer Hugo Josefson <hugo@josefson.org> (https://www.hugojosefson.com/)
+FROM golang as builder
 
-RUN mkdir /app 
+RUN mkdir -p /app 
 WORKDIR /app 
 
 COPY egos.go /app/ 
-RUN go build -o egos egos.go
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o egos egos.go
 
-ENTRYPOINT ["/app/egos"]
+###############################################################################
+FROM scratch as runtime
+LABEL maintainer Hugo Josefson <hugo@josefson.org> (https://www.hugojosefson.com/)
+
+COPY --from=builder /app/egos /egos
+
+ENTRYPOINT ["/egos"]
 
